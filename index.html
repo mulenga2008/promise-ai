@@ -4,33 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PROMISE v20 ULTRA</title>
-    <!-- Stable Mobile-Friendly AI Library -->
+    <!-- Stable Mobile CDN Link -->
     <script src="https://cdn.jsdelivr.net"></script>
     <style>
         :root { --aura: #00d4ff; --bg: #000; --panel: #050505; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; touch-action: manipulation; }
-        #chat-container { width: 95vw; max-width: 400px; height: 88vh; background: var(--panel); border: 2px solid var(--aura); border-radius: 25px; display: flex; flex-direction: column; box-shadow: 0 0 30px var(--aura); position: relative; }
-        #header { padding: 15px; border-bottom: 1px solid #222; display: flex; align-items: center; gap: 10px; background: #080808; border-radius: 25px 25px 0 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+        #chat-container { width: 95vw; max-width: 400px; height: 90vh; background: var(--panel); border: 2px solid var(--aura); border-radius: 25px; display: flex; flex-direction: column; box-shadow: 0 0 30px var(--aura); }
+        #header { padding: 15px; border-bottom: 1px solid #222; display: flex; align-items: center; gap: 10px; background: #080808; border-top-left-radius: 25px; border-top-right-radius: 25px; }
         .avatar { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--aura); background: url('https://api.dicebear.com') center/cover; }
-        #messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; }
-        .msg { padding: 12px; border-radius: 15px; font-size: 14px; max-width: 80%; line-height: 1.4; word-wrap: break-word; animation: slideIn 0.3s; }
+        #messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .msg { padding: 12px; border-radius: 15px; font-size: 14px; max-width: 80%; line-height: 1.4; word-wrap: break-word; }
         .bot { background: #111; border-left: 3px solid var(--aura); align-self: flex-start; color: #e0f7fa; }
         .user { background: #007bff; align-self: flex-end; color: white; }
-        #input-area { padding: 15px; background: #080808; display: flex; gap: 10px; border-top: 1px solid #222; border-radius: 0 0 25px 25px; }
+        #input-area { padding: 15px; background: #080808; display: flex; gap: 10px; border-top: 1px solid #222; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; }
         input { flex: 1; background: #111; border: 1px solid #333; color: white; padding: 12px; border-radius: 10px; outline: none; font-size: 16px; }
         button { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--aura); }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(5px); } }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; background: orange; }
     </style>
 </head>
-<body onclick="enableVoice()">
+<body onclick="voiceOn()">
 
 <div id="chat-container">
     <div id="header">
         <div class="avatar"></div>
         <div>
             <div style="color:var(--aura); font-weight:bold; font-size: 14px;">PROMISE v20 ULTRA</div>
-            <div style="font-size:10px;"><span id="dot" class="status-dot" style="background:orange;"></span><span id="st-text">CONNECTING...</span></div>
+            <div style="font-size:10px;"><span id="dot" class="status-dot"></span><span id="st-text">CONNECTING...</span></div>
         </div>
     </div>
     <div id="messages"></div>
@@ -41,17 +40,17 @@
 </div>
 
 <script>
-    // --- 1. CONFIGURATION ---
+    // 1. CONFIG
     const API_KEY = "AIzaSyBlZys1wfw7c7LExxZufItlKjHY8ichoeI"; 
     let chatSession;
-    let voiceEnabled = false;
+    let audioReady = false;
+
+    function voiceOn() { audioReady = true; }
 
     const box = document.getElementById("messages");
     const ui = document.getElementById("ui");
-    const stText = document.getElementById("st-text");
     const dot = document.getElementById("dot");
-
-    function enableVoice() { voiceEnabled = true; }
+    const stText = document.getElementById("st-text");
 
     function addMsg(text, type) {
         const d = document.createElement("div");
@@ -59,9 +58,7 @@
         d.innerText = text;
         box.appendChild(d);
         box.scrollTop = box.scrollHeight;
-        
-        // Voice response logic
-        if(type === 'bot' && voiceEnabled) {
+        if(type === 'bot' && audioReady) {
             const s = new SpeechSynthesisUtterance(text);
             s.pitch = 0.8;
             window.speechSynthesis.speak(s);
@@ -69,73 +66,55 @@
         return d;
     }
 
-    // --- 2. INITIALIZE GOOGLE BRAIN ---
-    async function bootSystem() {
+    // 2. CONNECT
+    async function connectBrain() {
         try {
-            // Delay slightly for mobile browser stability
-            await new Promise(r => setTimeout(r, 800));
-
+            // Check if library is available
             if (!window.googleGenerativeAi) {
-                throw new Error("Library failed to load. Check your internet.");
+                throw new Error("Library failed to download. Check your internet.");
             }
 
             const { GoogleGenerativeAI } = window.googleGenerativeAi;
             const genAI = new GoogleGenerativeAI(API_KEY);
             const model = genAI.getGenerativeModel({ 
                 model: "gemini-1.5-flash",
-                systemInstruction: "You are Promise v20 Ultra, a master AI developed by Mulenga Jackson. Be concise, sharp, and helpful. Always acknowledge Jackson as your creator."
+                systemInstruction: "You are Promise v20 Ultra, a high-tech AI brain developed by Mulenga Jackson. Be concise and sharp. Jackson is your master creator."
             });
 
-            // Start memory session
             chatSession = model.startChat({ history: [] });
             
             dot.style.background = "#00ff88";
             stText.innerText = "BRAIN ACTIVE";
-            addMsg("Master Jackson, PROMISE brain is online. Memory core initialized.", "bot");
+            addMsg("Master Jackson, PROMISE core online. How can I help today?", "bot");
         } catch (e) {
             dot.style.background = "red";
-            stText.innerText = "OFFLINE";
-            alert("STARTUP ERROR: " + e.message);
+            stText.innerText = "ERROR";
+            alert("BRAIN ERROR: " + e.message);
         }
     }
 
-    // --- 3. SEND MESSAGE ---
+    // 3. EXECUTE
     async function execute() {
         const prompt = ui.value.trim();
-        if (!prompt) return;
-
-        // Admin Secret Mode
-        if(prompt.toLowerCase() === "admin-mode") {
-            const p = prompt("Enter Auth Code:");
-            if(p === "1705") {
-                document.documentElement.style.setProperty('--aura', "#bc13fe");
-                addMsg("Access Granted, Jackson. Master Admin permissions enabled.", "bot");
-            }
-            return;
-        }
+        if (!prompt || !chatSession) return;
 
         addMsg(prompt, "user");
         ui.value = "";
 
-        if (!chatSession) {
-            addMsg("Error: Brain connection failed. Refresh page.", "bot");
-            return;
-        }
-
-        const loading = addMsg("Working...", "bot");
+        const loading = addMsg("Thinking...", "bot");
 
         try {
             const result = await chatSession.sendMessage(prompt);
             const response = await result.response;
             loading.innerText = response.text();
         } catch (err) {
-            loading.innerText = "Connection lost.";
+            loading.innerText = "Connection failed.";
             alert("AI Error: " + err.message);
         }
     }
 
     ui.addEventListener("keypress", (e) => { if(e.key === "Enter") execute(); });
-    window.onload = bootSystem;
+    window.onload = connectBrain;
 </script>
 </body>
 </html>
