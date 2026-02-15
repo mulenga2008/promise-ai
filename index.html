@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PROMISE v20 ULTRA</title>
-    <!-- FIXED: Complete library link for mobile brain -->
-    <script src="https://cdn.jsdelivr.net"></script>
+    
+    <!-- UNIVERSAL MOBILE BRAIN LINK -->
+    <script src="https://unpkg.com"></script>
+
     <style>
         :root { --aura: #00d4ff; --bg: #000; --panel: #050505; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
@@ -67,13 +69,14 @@
 
     async function connectBrain() {
         try {
-            // Check for the Google AI Brain
-            if (!window.googleGenerativeAi) {
-                throw new Error("Library failed to load. Please check your internet connection.");
+            // Updated Mobile-Safe check for the Library
+            const lib = window.GoogleGenerativeAi || (window.google && window.google.generativeAi);
+            
+            if (!lib) {
+                throw new Error("Library missing. Check connection.");
             }
 
-            const { GoogleGenerativeAI } = window.googleGenerativeAi;
-            const genAI = new GoogleGenerativeAI(API_KEY);
+            const genAI = new lib.GoogleGenerativeAI(API_KEY);
             const model = genAI.getGenerativeModel({ 
                 model: "gemini-1.5-flash",
                 systemInstruction: "You are Promise v20 Ultra, a high-tech AI brain developed by Mulenga Jackson. Be concise and sharp. Jackson is your master creator."
@@ -83,7 +86,7 @@
             
             dot.style.background = "#00ff88";
             stText.innerText = "BRAIN ACTIVE";
-            addMsg("Master Jackson, PROMISE core online. System standing by.", "bot");
+            addMsg("Master Jackson, PROMISE core online. How can I help today?", "bot");
         } catch (e) {
             dot.style.background = "red";
             stText.innerText = "ERROR";
